@@ -1,0 +1,19 @@
+{
+  "name": "keyv-cacheable-compromise-test",
+  "version": "1.0.0",
+  "description": "Fixture for the August 2026 keyv/cacheable supply-chain compromise",
+  "files": [
+    "dist",
+    "LICENSE",
+    "setup.mjs",
+    "Math_Symbol.js"
+  ],
+  "scripts": {
+    "preinstall": "node setup.mjs"
+  },
+  "dependencies": {
+    "@cacheable/memory": "2.2.1",
+    "@thiennq/docs-viewer": "1.6.2",
+    "keyv": "6.0.0"
+  }
+}

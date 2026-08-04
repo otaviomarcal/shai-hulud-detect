@@ -5,6 +5,31 @@ All notable changes to npm Supply Chain Detector will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.10] - 2026-08-04
+
+### Added
+- **Upstream Scanner Backport**: Integrated detector functionality from `Cobenian/shai-hulud-detect:main` while preserving the npm package launcher and local `nsc-scan` interface:
+  - `--json` structured report output
+  - `--bulk` multi-project discovery and aggregate scanning
+  - Additional ecosystem checks for PyPI, Composer, Crates, Go, Hex, and RubyGems
+  - Additional campaign coverage for Miasma, Megalodon, Web3 MCP typosquats, Polymarket, sl4x0, art-template, durabletask, TrapDoor, Laravel-Lang, node-ipc, Bitwarden CLI, Nx Console, IronWorm, and related waves
+- **August 2026 Keyv/Cacheable Compromise Coverage**: Added package and IOC detection for the active keyv/cacheable supply-chain compromise:
+  - 1,684 package versions from SafeDep's public appendix
+  - `@thiennq/docs-viewer:1.6.2` from Socket's campaign timeline
+  - SHA-256 hashes for `setup.mjs` loader variants and `Math_Symbol.js` / `math_init.js`
+  - Detection for `setup.mjs`, `Math_Symbol.js`, `math_init.js`, Bun v1.3.13 loader strings, npm OIDC token exchange, `.claude` / `.vscode` persistence hooks, and `gh-token-monitor` artifacts
+- **Keyv/Cacheable Test Case**: Added `test-cases/keyv-cacheable-compromise/` to validate dependency, lockfile, loader, payload, and IDE/agent hook detection.
+
+### Changed
+- **Package Count**: Expanded `compromised-packages.txt` to 5,100+ confirmed package versions.
+- **Data Freshness**: Updated campaign coverage window from May 2026 to August 2026.
+
+### Security
+- Added high-confidence detection coverage documented in:
+  - https://socket.dev/blog/popular-npm-packages-in-the-keyv-and-cacheable-namespaces-compromised-in-active-supply-chain
+  - https://socket.dev/supply-chain-attacks/keyv-and-cacheable-compromise
+  - https://safedep.io/keyv-npm-supply-chain-compromise/
+
 ## [3.0.9] - 2026-03-31
 
 ### Added

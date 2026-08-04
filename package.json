@@ -1,6 +1,6 @@
 {
   "name": "@otaviomarcal/npm-supply-chain-detector",
-  "version": "3.0.9",
+  "version": "3.0.10",
   "description": "Local-first npm supply-chain detector CLI for known malicious packages, workflows, and IoCs.",
   "license": "MIT",
   "author": "Otavio Marcal",

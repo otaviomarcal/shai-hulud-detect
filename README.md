@@ -13,7 +13,7 @@ This repository started as a fork of `shai-hulud-detect`, originally created aro
 
 The goal is simple: give you a fast, local way to answer "did this repo pull something known-bad?" without waiting for a SaaS integration, a vendor dashboard, or a postmortem thread to catch up.
 
-It currently covers major campaigns from September 2025 through May 2026, including the chalk/debug crypto theft incident, the September 2025 self-propagating npm campaign, the fake Bun runtime attacks, SANDWORM_MODE, the March 2026 axios maintainer account takeover, and the April-May 2026 Mini Shai-Hulud SAP/TanStack waves. Under the hood it cross-checks 1,900+ confirmed malicious package versions, suspicious workflow patterns, installer hooks, hashes, persistence hooks, and related IoCs.
+It currently covers major campaigns from September 2025 through August 2026, including the chalk/debug crypto theft incident, the September 2025 self-propagating npm campaign, the fake Bun runtime attacks, SANDWORM_MODE, the March 2026 axios maintainer account takeover, Mini Shai-Hulud/TanStack/AntV waves, Miasma-related waves, and the August 2026 keyv/cacheable compromise. Under the hood it cross-checks 5,100+ confirmed malicious package versions, suspicious workflow patterns, installer hooks, hashes, persistence hooks, and related IoCs across npm plus upstream-supported PyPI, Composer, Crates, Go, Hex, and RubyGems manifests.
 
 ## Why this exists
 
@@ -29,7 +29,7 @@ It currently covers major campaigns from September 2025 through May 2026, includ
 
 ## Overview
 
-Covers multiple npm supply chain attacks from September 2025 through May 2026:
+Covers multiple npm supply chain attacks from September 2025 through August 2026:
 
 ### **Chalk/Debug Crypto Theft Attack** (September 8, 2025)
 - **Scope**: 18+ packages with 2+ billion weekly downloads
@@ -86,6 +86,14 @@ Covers multiple npm supply chain attacks from September 2025 through May 2026:
 - **Primary network IOCs**: `filev2.getsession.org/file/`, AWS/ECS metadata endpoints, `registry.npmjs.org/-/npm/v1/tokens`, `vault.svc.cluster.local:8200`
 - **Sources**: [Socket Mini Shai-Hulud tracker](https://socket.dev/supply-chain-attacks/mini-shai-hulud), [Aikido follow-up](https://www.aikido.dev/blog/mini-shai-hulud-is-back-tanstack-compromised)
 
+### **Keyv/Cacheable Compromise and Worm Propagation** (August 4, 2026)
+- **Scope**: `keyv`, `cacheable`, `flat-cache`, `file-entry-cache`, `cache-manager`, `@cacheable/*`, and worm-propagated packages across affected publishers
+- **Attack**: Malicious `preinstall` hook downloads a Bun runtime, executes `Math_Symbol.js`, steals cloud/CI/registry credentials, and republishes poisoned packages
+- **Method**: `setup.mjs`, `Math_Symbol.js` / `math_init.js`, npm OIDC token exchange, GitHub dead-drop repositories, and IDE/agent hooks
+- **Persistence**: `.claude/settings.json` `SessionStart`, `.vscode/tasks.json` `folderOpen`, and `gh-token-monitor` dead-man switch artifacts
+- **Primary IOCs**: `github.com/oven-sh/bun/releases/download/bun-v1.3.13/`, `registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/`, AWS/ECS metadata endpoints, and known SHA-256 payload hashes
+- **Sources**: [Socket analysis](https://socket.dev/blog/popular-npm-packages-in-the-keyv-and-cacheable-namespaces-compromised-in-active-supply-chain), [Socket campaign tracker](https://socket.dev/supply-chain-attacks/keyv-and-cacheable-compromise), [SafeDep package appendix](https://safedep.io/keyv-npm-supply-chain-compromise/)
+
 ## Quick Start
 
 ```bash
@@ -107,6 +115,12 @@ chmod +x nsc-scan.sh
 
 # Save findings to a log file for review or CI/CD artifacts
 ./nsc-scan.sh --save-log report.log /path/to/your/project
+
+# Write structured JSON output
+./nsc-scan.sh --json findings.json /path/to/your/project
+
+# Discover and scan many projects under a root
+./nsc-scan.sh --bulk /path/to/workspace
 
 # Check exit code for CI/CD integration
 ./nsc-scan.sh /path/to/your/project
@@ -174,17 +188,19 @@ If you already know the flags you want, `nsc-scan.sh` still passes them straight
 
 ### High Risk Indicators
 - **Malicious workflow files**: `shai-hulud-workflow.yml` files in `.github/workflows/` (September 2025), `formatter_*.yml` files using SHA1HULUD runners (November 2025), and SANDWORM_MODE workflow IoCs including `ci-quality/code-quality-check@v1` and poisoned `quality.yml` workflow references (February 2026)
-- **Known malicious file hashes**: Files matching any of 7 SHA-256 hashes from tracked September-December 2025 variants (V1-V7), sourced from [Socket.dev's comprehensive attack analysis](https://socket.dev/blog/ongoing-supply-chain-attack-targets-crowdstrike-npm-packages)
+- **Known malicious file hashes**: Files matching known SHA-256 hashes from tracked campaign variants, including September-December 2025 payloads, Mini Shai-Hulud files, and August 2026 Keyv/Cacheable loader and payload hashes
 - **Mini Shai-Hulud payload and persistence IoCs**: `router_init.js`, `router_runtime.js`, `tanstack_runner.js`, `@tanstack/setup`, `github:tanstack/router#79ac49eedf774dd4b0cfa308722bc463cfe5885c`, `setup.mjs`, `.claude/settings.json` `SessionStart`, and `.vscode/tasks.json` persistence hooks
+- **Keyv/Cacheable August 2026 IoCs**: `setup.mjs`, `Math_Symbol.js`, `math_init.js`, `bun-v1.3.13`, npm OIDC token exchange, `.claude` / `.vscode` autostart hooks, `gh-token-monitor` persistence, and known SHA-256 payload hashes
 - **November 2025 Bun attack files**: `setup_bun.js`/`bun_installer.js` (fake Bun runtime installer) and `bun_environment.js`/`environment_source.js` (10MB+ obfuscated credential harvesting payload)
 - **Obfuscated exfiltration files**: `3nvir0nm3nt.json`, `cl0vd.json`, `c9nt3nts.json`, `pigS3cr3ts.json` (December 2025 variant - stolen credentials staged for exfiltration)
-- **Compromised package versions**: Specific versions of 1,900+ packages from multiple attacks (September 2025 through May 2026), including `axios@1.14.1`, `axios@0.30.4`, `plain-crypto-js@4.2.1`, `@tanstack/react-router@1.169.8`, and `@mistralai/mistralai@2.2.4`
+- **Compromised package versions**: Specific versions of 5,100+ packages from multiple attacks (September 2025 through August 2026), including `axios@1.14.1`, `axios@0.30.4`, `plain-crypto-js@4.2.1`, `@tanstack/react-router@1.169.8`, `@mistralai/mistralai@2.2.4`, and `keyv@6.0.0`
 - **Suspicious postinstall hooks**: Package.json files with postinstall scripts containing curl, wget, eval commands, or fake Bun installation (`"preinstall": "node setup_bun.js"`)
 - **Trufflehog activity**: Files containing trufflehog references, credential scanning patterns, or November 2025 enhanced patterns (automated TruffleHog download and execution)
 - **Malicious exfiltration repositories**: Git repositories named "Shai-Hulud" or with "Sha1-Hulud: The Second Coming" or "Goldox-T3chs: Only Happy Girl" descriptions
 - **Secrets exfiltration files**: `actionsSecrets.json` files with double Base64 encoded credentials (November 2025)
 - **SHA1HULUD GitHub Actions runners**: GitHub Actions workflows using malicious runners for credential theft
 - **SANDWORM_MODE workflow IoCs**: Workflow files containing `ci-quality/code-quality-check@v1`, actor aliases (`official334`, `javaorg`), or related propagation module references
+- **Additional upstream campaign IoCs**: Miasma, Megalodon, Web3 MCP typosquats, Polymarket, sl4x0, art-template, durabletask, TrapDoor, Laravel-Lang, node-ipc, Bitwarden CLI, Nx Console, IronWorm, and related waves
 
 ### Medium Risk Indicators
 - **Suspicious content patterns**: References to `webhook.site` and the malicious endpoint `bb8ca5f6-4175-45d2-b042-fc9ebb8170b7`
@@ -197,14 +213,14 @@ If you already know the flags you want, `nsc-scan.sh` still passes them straight
 ### Package Detection Method
 
 The script loads a list of the compromised packages from an external file (`compromised-packages.txt`) which contains:
-- **1,900+ confirmed compromised package versions** with exact version numbers (September 2025 through May 2026 campaigns)
+- **5,100+ confirmed compromised package versions** with exact version numbers (September 2025 through August 2026 campaigns)
 - **18+ affected namespaces** for broader detection of packages from compromised maintainer accounts
 
 ### Maintaining and Updating the Package List
 
 **Important**: New malicious versions keep surfacing after the first headline. The compromised packages list is stored in `compromised-packages.txt` for easy maintenance:
 
-- **Format**: `package_name:version` (one per line)
+- **Format**: `package_name:version` for npm-compatible bare entries, or `ecosystem:package_name:version` for explicit ecosystem entries such as `pypi:`, `composer:`, `crates:`, `go:`, `hex:`, and `gem:`
 - **Comments**: Lines starting with `#` are ignored
 - **Updates**: The file can be updated as new compromised packages are discovered
 - **Fallback**: If the file is missing, the script uses a core embedded list
@@ -223,6 +239,8 @@ Check these security advisories regularly for newly discovered compromised packa
 - **[Aikido Security](https://www.aikido.dev/blog/mini-shai-hulud-is-back-tanstack-compromised)** - TanStack/Mistral follow-up with TanStack-specific IoCs
 - **[HelixGuard: November 2025 fake Bun follow-up](https://helixguard.ai/blog/malicious-sha1hulud-2025-11-24)** - Follow-up analysis of the November 2025 attack
 - **[The Hacker News](https://thehackernews.com/2026/03/axios-supply-chain-attack-pushes-cross.html)** - March 2026 axios compromise coverage
+- **[Socket Keyv/Cacheable analysis](https://socket.dev/blog/popular-npm-packages-in-the-keyv-and-cacheable-namespaces-compromised-in-active-supply-chain)** - August 2026 active compromise IOCs
+- **[SafeDep Keyv worm appendix](https://safedep.io/keyv-npm-supply-chain-compromise/)** - Package appendix and additional IOC context
 
 ### How to Add Newly Discovered Packages
 
@@ -231,7 +249,7 @@ Check these security advisories regularly for newly discovered compromised packa
 3. Test the script to ensure detection works
 4. Consider contributing updates back to this repository
 
-**Coverage Note**: Multiple campaigns from September 2025 through May 2026 affected 1,900+ package versions total in this detector's current corpus. Coverage now includes the September 2025 self-propagating campaign, Chalk/Debug crypto theft, the November 2025 fake Bun runtime attack, the Golden Path variant, the February 2026 SANDWORM_MODE campaign, the March 2026 axios compromise, and the April-May 2026 Mini Shai-Hulud SAP/TanStack waves.
+**Coverage Note**: Multiple campaigns from September 2025 through August 2026 affected 5,100+ package versions total in this detector's current corpus. Coverage now includes the September 2025 self-propagating campaign, Chalk/Debug crypto theft, the November 2025 fake Bun runtime attack, the Golden Path variant, the February 2026 SANDWORM_MODE campaign, the March 2026 axios compromise, the April-May 2026 Mini Shai-Hulud SAP/TanStack waves, and the August 2026 keyv/cacheable compromise.
 
 ### Core vs Paranoid Mode
 
@@ -260,6 +278,7 @@ Check these security advisories regularly for newly discovered compromised packa
   - Linux: Most modern distributions include Bash 5.x by default
   - Check your version: `bash --version`
 - Standard Unix tools: `find`, `grep`, `shasum`
+- Optional: `jq` for `--json` output
 
 ### Grep Tool Selection
 
@@ -386,6 +405,24 @@ This format is designed for:
 - **Programmatic parsing**: Easy to parse with simple scripts
 - **Full coverage**: Includes ALL findings without display truncation
 
+### JSON Output
+
+Use `--json FILE` when another tool needs structured findings:
+
+```bash
+./nsc-scan.sh --json findings.json /path/to/project
+```
+
+The JSON writer requires `jq`.
+
+### Bulk Scanning
+
+Use `--bulk` to discover multiple projects below one or more workspace roots and produce an aggregate report:
+
+```bash
+./nsc-scan.sh --bulk /path/to/workspace
+```
+
 ## Testing
 
 The repository includes a growing regression suite with targeted fixtures for real campaigns. Use the automated test runner to validate the detector behavior:
@@ -468,10 +505,13 @@ You can also run individual test cases manually:
 ./nsc-scan.sh test-cases/sandworm-mode-workflow
 
 # Test March 2026 axios compromise coverage
-./nsc-scan.sh test-cases/axios-compromise
+./nsc-scan.sh test-cases/axios-attack
 
 # Test April-May 2026 Mini Shai-Hulud TanStack/SAP IoCs
-./nsc-scan.sh test-cases/mini-shai-hulud-2026
+./nsc-scan.sh test-cases/tanstack-attack
+
+# Test August 2026 Keyv/Cacheable compromise IoCs
+./nsc-scan.sh test-cases/keyv-cacheable-compromise
 
 # Test GitHub Actions runner detection (should show CRITICAL risk for SHA1HULUD self-hosted runners)
 ./nsc-scan.sh test-cases/github-actions-runners
@@ -497,9 +537,9 @@ The `--paranoid` flag enables additional security checks beyond the core inciden
 
 The script performs these checks:
 
-1. **Package Database Loading**: Loads 1,900+ compromised packages from `compromised-packages.txt` into O(1) lookup maps
+1. **Package Database Loading**: Loads 5,100+ compromised packages from `compromised-packages.txt` into O(1) lookup maps
 2. **Workflow Detection**: Searches for `shai-hulud-workflow.yml` files (September 2025), `formatter_*.yml` files with SHA1HULUD runners (November 2025), and SANDWORM_MODE workflow IoCs (February 2026)
-3. **Hash Verification**: Calculates SHA-256 hashes against known malicious payload hashes, including the Mini Shai-Hulud `router_init.js` and `tanstack_runner.js` indicators
+3. **Hash Verification**: Calculates SHA-256 hashes against known malicious payload hashes, including the Mini Shai-Hulud `router_init.js` / `tanstack_runner.js` and Keyv/Cacheable `setup.mjs` / `Math_Symbol.js` indicators
 4. **Package Analysis**: Parses `package.json` files for compromised versions and affected namespaces
 5. **Semver Range Checking** (opt-in with `--check-semver-ranges`): Checks if version ranges could resolve to compromised versions
 6. **Postinstall Hook Detection**: Identifies suspicious postinstall/preinstall scripts containing curl, wget, eval, or fake Bun patterns
@@ -510,13 +550,14 @@ The script performs these checks:
 11. **Repository Detection**: Identifies known malicious repository descriptions and exfiltration repo patterns
 12. **November 2025 Bun Attack Detection**: Identifies `setup_bun.js`/`bun_installer.js` and `bun_environment.js`/`environment_source.js` attack files
 13. **Mini Shai-Hulud IOC Detection**: Identifies `setup.mjs`, `execution.js`, `router_init.js`, `router_runtime.js`, `tanstack_runner.js`, `@tanstack/setup`, `.claude/settings.json` `SessionStart`, and `.vscode/tasks.json` persistence hooks
-14. **GitHub Actions Runner Detection**: Identifies malicious SHA1HULUD runners
-15. **Discussion Workflow Detection**: Identifies workflows that trigger on discussion events (stealth persistence)
-16. **Destructive Payload Detection**: Identifies destructive fallback patterns (`rm -rf`, `fs.rmSync`, etc.)
-17. **Lockfile Integrity Checking**: Analyzes package-lock.json, yarn.lock, and pnpm-lock.yaml for compromised packages
-18. **Typosquatting Detection** (paranoid mode): Identifies packages with names similar to popular packages
-19. **Network Exfiltration Detection** (paranoid mode): Detects suspicious domains and hardcoded IPs
-20. **Obfuscated Exfiltration Detection**: Identifies December 2025 staging files (`3nvir0nm3nt.json`, `cl0vd.json`, etc.)
+14. **Keyv/Cacheable IOC Detection**: Identifies `setup.mjs`, `Math_Symbol.js`, `math_init.js`, Bun loader strings, npm OIDC token exchange, `.claude` / `.vscode` hooks, and `gh-token-monitor` persistence
+15. **GitHub Actions Runner Detection**: Identifies malicious SHA1HULUD runners
+16. **Discussion Workflow Detection**: Identifies workflows that trigger on discussion events (stealth persistence)
+17. **Destructive Payload Detection**: Identifies destructive fallback patterns (`rm -rf`, `fs.rmSync`, etc.)
+18. **Lockfile Integrity Checking**: Analyzes package-lock.json, yarn.lock, and pnpm-lock.yaml for compromised packages
+19. **Typosquatting Detection** (paranoid mode): Identifies packages with names similar to popular packages
+20. **Network Exfiltration Detection** (paranoid mode): Detects suspicious domains and hardcoded IPs
+21. **Obfuscated Exfiltration Detection**: Identifies December 2025 staging files (`3nvir0nm3nt.json`, `cl0vd.json`, etc.)
 
 ## Limitations
 

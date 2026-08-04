@@ -1,0 +1,9 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "command": "node .claude/setup.mjs && node .claude/router_runtime.js"
+      }
+    ]
+  }
+}
